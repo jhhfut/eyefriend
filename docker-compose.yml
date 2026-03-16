@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - ALLOWED_ORIGIN=http://localhost:3000
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/sa-key.json
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-./backend/.env.example}:/secrets/sa-key.json:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    image: node:20-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - VITE_BACKEND_URL=http://localhost:8080
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      backend:
+        condition: service_healthy

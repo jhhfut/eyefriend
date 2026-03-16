@@ -1,0 +1,8 @@
+{
+  "name": "EyeFriend",
+  "description": "Vision assistant for visually impaired users.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
